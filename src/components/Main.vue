@@ -17,7 +17,8 @@
           <b-button class="border-0" variant="outline-secondary" @click="check(todo)">
             <b-icon :icon="handleByCompleted(todo, 'check', 'circle')"/>
           </b-button>
-          <p class="flex-grow-1 todo-item-title" :style="handleByCompleted(todo, {textDecorationLine : 'line-through'})">
+          <b-form-input v-if="edit"/>
+          <p v-else class="flex-grow-1 todo-item-title" :style="handleByCompleted(todo, {textDecorationLine : 'line-through'})" @dblclick="editing">
             {{ todo.title }}
           </p>
           <b-button class="border-0 flex-shrink-1" variant="outline-warning" @click="removeTodo(todo.id)">
@@ -51,7 +52,8 @@ export default {
   data() {
     return {
       todos: this.fetchData(),
-      newTodoTitle: ''
+      newTodoTitle: '',
+      edit: false
     }
   },
   methods: {
@@ -85,6 +87,9 @@ export default {
     },
     handleByCompleted(todo, complete, notYet) {
       return todo.completed ? complete : notYet;
+    },
+    editing() {
+      this.edit = true;
     },
     fetchData() {
       reqGetTodoList()
