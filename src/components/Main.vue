@@ -30,8 +30,21 @@
 </template>
 
 <script>
-import {reqGetTodoList, reqSaveTodo, reqDeleteTodo} from "@/api/request";
+import {reqGetTodoList, reqCreateTodo, reqUpdateTodo, reqDeleteTodo} from "@/api/request";
 import {Todo, copyTodo} from "@/model/todo";
+
+function copyAndMod(todo, action) {
+  const copiedTodo = copyTodo(todo);
+  action(copiedTodo);
+  return copiedTodo;
+}
+
+const reverseCompleted = todo => {
+  todo.completed = !todo.completed;
+  return todo
+};
+
+const copyAndReverseCompleted = todo => copyAndMod(todo, reverseCompleted);
 
 export default {
   name: "Main",
@@ -43,36 +56,31 @@ export default {
   },
   methods: {
     addTodo() {
-      reqSaveTodo(new Todo(this.newTodoTitle))
+      reqCreateTodo(new Todo(this.newTodoTitle))
         .then(response => this.todos.push(response.data));
       this.newTodoTitle = '';
     },
     removeTodo(id) {
       reqDeleteTodo(id)
         .then(response => {
-          if (response.statusText === "OK") this.todos = this.todos.filter(todo => todo.id !== id);
+          if (response.statusText === 'OK') this.todos = this.todos.filter(todo => todo.id !== id);
         })
     },
     check(todo) {
-      // 다른 함수로 뺄 수 있겠어
-      let copiedTodo = copyTodo(todo);
-      copiedTodo.completed = !copiedTodo.completed;
-      reqSaveTodo(copiedTodo)
-        .then(response => todo.completed = response.data.completed);
+      let copiedTodo = copyAndReverseCompleted(todo);
+      reqUpdateTodo(copiedTodo)
+        .then(response => {
+          if (response.statusText === 'OK') todo.completed = copiedTodo.completed;
+        });
     },
     doneAll() {
       const targetTodos = this.todos
           .filter(todo => todo.completed === false)
-          .map(todo => {
-            //위랑 완전 중복
-            const copiedTodo = copyTodo(todo);
-            copiedTodo.completed = true;
-            return copiedTodo;
-          });
-      reqSaveTodo(...targetTodos)
+          .map(copyAndReverseCompleted);
+
+      reqUpdateTodo(...targetTodos)
           .then(response => {
-            if (response.statusText === 'OK')
-            this.todos.forEach(todo => todo.completed = true)
+            if (response.statusText === 'OK') this.todos.forEach(todo => todo.completed = true)
           });
     },
     handleByCompleted(todo, complete, notYet) {
