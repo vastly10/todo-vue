@@ -9,6 +9,7 @@ export const reqCreateTodo = data => {
 }
 
 export const reqUpdateTodo = (...data) => {
+    if (data.length < 1) return Promise.resolve("No data!");
     if (data.length === 1) return axios.post("/todo/update", data[0]);
     return axios.post("/todo/update-all", data);
 }
